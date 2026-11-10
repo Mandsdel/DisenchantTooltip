@@ -4,7 +4,7 @@ A World of Warcraft: Forever addon that will display verified disenchant outcome
 
 ## Status
 
-The addon and updater use a deterministic mock provider while ForeverDB access is pending. Mock tooltip output is labeled as mock data, appears on every item tooltip for test purposes, and is never presented as ForeverDB data. A non-mock provider automatically returns the addon to item-specific output.
+The updater now defaults to a temporary Classic estimate provider while ForeverDB access is pending. It derives outcomes locally only for original-Classic uncommon armor and weapons at item levels 1–65, labels every section `Classic estimate`, and suppresses fish, consumables, rares, epics, and unsupported/custom items. These are not verified Forever results.
 
 ## Installation
 
@@ -14,7 +14,7 @@ Double-click `Install Disenchant Tooltip.cmd` in this repository. It installs or
 D:\World of Warcraft\_forever_\Interface\AddOns\DisenchantTooltip
 ```
 
-Re-running the installer updates addon code, the updater, and providers while preserving the installed generated data and local configuration. The installed `Update Disenchant Data.cmd` generates the mock data currently used for testing.
+Re-running the installer updates addon code, the updater, and providers while preserving the installed generated data and local configuration. The installed `Update Disenchant Data.cmd` selects the temporary Classic estimate provider.
 
 ## Local test update
 

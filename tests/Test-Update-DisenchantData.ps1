@@ -12,8 +12,10 @@ if ([string]::IsNullOrWhiteSpace($ProjectRoot)) {
 
 $updater = Join-Path $ProjectRoot 'Update-DisenchantData.ps1'
 $mockProvider = Join-Path $ProjectRoot 'Providers\MockProvider.ps1'
+$classicEstimateProvider = Join-Path $ProjectRoot 'Providers\ClassicEstimateProvider.ps1'
 $testDirectory = Join-Path ([IO.Path]::GetTempPath()) ('DisenchantTooltip-test-' + [guid]::NewGuid().ToString())
 $dataPath = Join-Path $testDirectory 'DisenchantData.lua'
+$classicEstimateDataPath = Join-Path $testDirectory 'ClassicEstimateData.lua'
 $invalidProvider = Join-Path $testDirectory 'InvalidProvider.ps1'
 
 try {
@@ -36,6 +38,17 @@ try {
     }
     if (-not (Select-String -LiteralPath $dataPath -Pattern 'mockEntries = {' -Quiet)) {
         throw 'Mock provider output does not contain global mock entries.'
+    }
+
+    & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $updater -ProviderPath $classicEstimateProvider -OutputPath $classicEstimateDataPath
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Classic estimate provider update failed.'
+    }
+    if (-not (Select-String -LiteralPath $classicEstimateDataPath -Pattern 'mode = "classic-estimate"' -Quiet)) {
+        throw 'Classic estimate provider output has the wrong source mode.'
+    }
+    if (Select-String -LiteralPath $classicEstimateDataPath -Pattern 'mockEntries = {' -Quiet) {
+        throw 'Classic estimate provider output contains mock entries.'
     }
 
     @'

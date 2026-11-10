@@ -12,3 +12,5 @@ The function must return an object with:
 The future ForeverDB provider will live locally, read its DPAPI-protected token from `Config\ForeverDB.secret`, and return this contract. It must set `source.name` to `ForeverDB.net`; the addon will then show its visible in-tooltip attribution.
 
 Mock mode is temporary test behavior: `Core.lua` uses `mockEntries` for every item tooltip and labels the section `Disenchanting (mock data)`. A real provider must use a mode other than `mock`, omit `mockEntries`, and supply item-specific records through `items`.
+
+`ClassicEstimateProvider.ps1` is the current temporary provider. Its `classic-estimate` mode has no item records: the addon derives outcomes locally from an item’s cached rarity, class, and level. It supports only original-Classic uncommon armor and weapons at item levels 1–65, labels every output as a Classic estimate, and deliberately suppresses all other items. This mode is removed by selecting a real item-specific provider such as ForeverDB.
