@@ -124,7 +124,21 @@ local function hookTooltip(tooltip)
     end
 end
 
-hookTooltip(GameTooltip)
-hookTooltip(ItemRefTooltip)
-hookTooltip(ShoppingTooltip1)
-hookTooltip(ShoppingTooltip2)
+local usesNativeTooltipCallbacks = type(GameTooltip.GetPrimaryTooltipData) == "function"
+    and TooltipDataProcessor
+    and type(TooltipDataProcessor.AddTooltipPostCall) == "function"
+    and Enum
+    and Enum.TooltipDataType
+    and Enum.TooltipDataType.Item
+
+if usesNativeTooltipCallbacks then
+    TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip)
+        clearTooltipState(tooltip)
+        addDisenchantData(tooltip)
+    end)
+else
+    hookTooltip(GameTooltip)
+    hookTooltip(ItemRefTooltip)
+    hookTooltip(ShoppingTooltip1)
+    hookTooltip(ShoppingTooltip2)
+end
