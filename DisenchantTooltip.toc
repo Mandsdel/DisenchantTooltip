@@ -1,0 +1,7 @@
+## Interface: 16001
+## Title: Disenchant Tooltip
+## Notes: Displays locally generated disenchant outcome data in item tooltips.
+## Version: 0.1.0
+
+Data\DisenchantData.lua
+Core.lua
