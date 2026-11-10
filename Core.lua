@@ -61,7 +61,8 @@ local function addDisenchantData(tooltip)
         return
     end
 
-    local entries = data.items[itemId]
+    local isMock = data.source and data.source.mode == "mock"
+    local entries = isMock and data.mockEntries or data.items[itemId]
     if type(entries) ~= "table" then
         return
     end
@@ -86,7 +87,6 @@ local function addDisenchantData(tooltip)
     end)
 
     tooltip.__disenchantTooltipItemId = itemId
-    local isMock = data.source and data.source.mode == "mock"
     tooltip:AddLine(isMock and "Disenchanting (mock data)" or "Disenchanting", 0.55, 0.82, 1)
 
     for index = 1, math.min(3, #validEntries) do

@@ -49,6 +49,13 @@ function ConvertTo-LuaNumber {
     return $Value.ToString('0.################', [Globalization.CultureInfo]::InvariantCulture)
 }
 
+function ConvertTo-LuaRecord {
+    param([object]$Record)
+
+    $outputId = if ($null -eq $Record.outputId) { '' } else { " outputId = $($Record.outputId)," }
+    return "{ name = $(ConvertTo-LuaString $Record.outputName),$outputId probability = $(ConvertTo-LuaNumber $Record.probability), minQuantity = $($Record.minimumQuantity), maxQuantity = $($Record.maximumQuantity), sampleSize = $($Record.sampleSize) },"
+}
+
 function Get-PropertyValue {
     param(
         [object]$Object,
@@ -176,14 +183,21 @@ try {
         "        version = $(ConvertTo-LuaString ([string]$source.version)),"
         "        generatedAt = $(ConvertTo-LuaString ([string]$source.generatedAt)),"
         '    },'
-        '    items = {'
     )
 
+    if ([string]$source.mode -eq 'mock') {
+        $lines += '    mockEntries = {'
+        foreach ($record in $deduplicatedRecords) {
+            $lines += "        $(ConvertTo-LuaRecord $record)"
+        }
+        $lines += '    },'
+    }
+
+    $lines += '    items = {'
     foreach ($itemGroup in ($deduplicatedRecords | Group-Object itemId | Sort-Object { [int]$_.Name })) {
         $lines += "        [$($itemGroup.Name)] = {"
         foreach ($record in $itemGroup.Group) {
-            $outputId = if ($null -eq $record.outputId) { '' } else { " outputId = $($record.outputId)," }
-            $lines += "            { name = $(ConvertTo-LuaString $record.outputName),$outputId probability = $(ConvertTo-LuaNumber $record.probability), minQuantity = $($record.minimumQuantity), maxQuantity = $($record.maximumQuantity), sampleSize = $($record.sampleSize) },"
+            $lines += "            $(ConvertTo-LuaRecord $record)"
         }
         $lines += '        },'
     }

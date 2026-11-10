@@ -9,6 +9,11 @@ DisenchantTooltipData = {
         version = "mock-1",
         generatedAt = "2026-11-10T00:00:00Z",
     },
+    mockEntries = {
+        { name = "Mock Arcane Dust", outputId = 999101, probability = 0.7, minQuantity = 1, maxQuantity = 3, sampleSize = 500 },
+        { name = "Mock Greater Essence", outputId = 999102, probability = 0.25, minQuantity = 1, maxQuantity = 1, sampleSize = 500 },
+        { name = "Mock Brilliant Shard", outputId = 999103, probability = 0.05, minQuantity = 1, maxQuantity = 1, sampleSize = 500 },
+    },
     items = {
         [999001] = {
             { name = "Mock Arcane Dust", outputId = 999101, probability = 0.7, minQuantity = 1, maxQuantity = 3, sampleSize = 500 },

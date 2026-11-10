@@ -4,7 +4,17 @@ A World of Warcraft: Forever addon that will display verified disenchant outcome
 
 ## Status
 
-The addon and updater use a deterministic mock provider while ForeverDB access is pending. Mock tooltip output is labeled as mock data and is never presented as ForeverDB data.
+The addon and updater use a deterministic mock provider while ForeverDB access is pending. Mock tooltip output is labeled as mock data, appears on every item tooltip for test purposes, and is never presented as ForeverDB data. A non-mock provider automatically returns the addon to item-specific output.
+
+## Installation
+
+Double-click `Install Disenchant Tooltip.cmd` in this repository. It installs or updates the addon in:
+
+```text
+D:\World of Warcraft\_forever_\Interface\AddOns\DisenchantTooltip
+```
+
+Re-running the installer updates addon code, the updater, and providers while preserving the installed generated data and local configuration. The installed `Update Disenchant Data.cmd` generates the mock data currently used for testing.
 
 ## Local test update
 

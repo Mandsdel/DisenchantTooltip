@@ -34,6 +34,9 @@ try {
     if ($firstHash -ne $secondHash) {
         throw 'Mock provider output is not deterministic.'
     }
+    if (-not (Select-String -LiteralPath $dataPath -Pattern 'mockEntries = {' -Quiet)) {
+        throw 'Mock provider output does not contain global mock entries.'
+    }
 
     @'
 function Get-DisenchantProviderData {
