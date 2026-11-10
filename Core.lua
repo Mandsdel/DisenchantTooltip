@@ -1,19 +1,5 @@
 local addonName = ...
 
-local classicUncommonTiers = {
-    { minimum = 1, maximum = 15, dust = "Strange Dust", dustMinimum = 1, dustMaximum = 2, armorDust = 0.80, essence = "Lesser Magic Essence", essenceMinimum = 1, essenceMaximum = 2, armorEssence = 0.20 },
-    { minimum = 16, maximum = 20, dust = "Strange Dust", dustMinimum = 2, dustMaximum = 3, armorDust = 0.75, essence = "Greater Magic Essence", essenceMinimum = 1, essenceMaximum = 2, armorEssence = 0.20, shard = "Small Glimmering Shard", shardChance = 0.05 },
-    { minimum = 21, maximum = 25, dust = "Strange Dust", dustMinimum = 4, dustMaximum = 6, armorDust = 0.75, essence = "Lesser Astral Essence", essenceMinimum = 1, essenceMaximum = 2, armorEssence = 0.15, shard = "Small Glimmering Shard", shardChance = 0.10 },
-    { minimum = 26, maximum = 30, dust = "Soul Dust", dustMinimum = 1, dustMaximum = 2, armorDust = 0.75, essence = "Greater Astral Essence", essenceMinimum = 1, essenceMaximum = 2, armorEssence = 0.20, shard = "Large Glimmering Shard", shardChance = 0.05 },
-    { minimum = 31, maximum = 35, dust = "Soul Dust", dustMinimum = 2, dustMaximum = 5, armorDust = 0.75, essence = "Lesser Mystic Essence", essenceMinimum = 1, essenceMaximum = 2, armorEssence = 0.20, shard = "Small Glowing Shard", shardChance = 0.05 },
-    { minimum = 36, maximum = 40, dust = "Vision Dust", dustMinimum = 1, dustMaximum = 2, armorDust = 0.75, essence = "Greater Mystic Essence", essenceMinimum = 1, essenceMaximum = 2, armorEssence = 0.20, shard = "Large Glowing Shard", shardChance = 0.05 },
-    { minimum = 41, maximum = 45, dust = "Vision Dust", dustMinimum = 2, dustMaximum = 5, armorDust = 0.75, essence = "Lesser Nether Essence", essenceMinimum = 1, essenceMaximum = 2, armorEssence = 0.20, shard = "Small Radiant Shard", shardChance = 0.05 },
-    { minimum = 46, maximum = 50, dust = "Dream Dust", dustMinimum = 1, dustMaximum = 2, armorDust = 0.75, essence = "Greater Nether Essence", essenceMinimum = 1, essenceMaximum = 2, armorEssence = 0.20, shard = "Large Radiant Shard", shardChance = 0.05 },
-    { minimum = 51, maximum = 55, dust = "Dream Dust", dustMinimum = 2, dustMaximum = 5, armorDust = 0.75, essence = "Lesser Eternal Essence", essenceMinimum = 1, essenceMaximum = 2, armorEssence = 0.20, shard = "Small Brilliant Shard", shardChance = 0.05 },
-    { minimum = 56, maximum = 60, dust = "Illusion Dust", dustMinimum = 1, dustMaximum = 2, armorDust = 0.75, essence = "Greater Eternal Essence", essenceMinimum = 1, essenceMaximum = 2, armorEssence = 0.20, shard = "Large Brilliant Shard", shardChance = 0.05 },
-    { minimum = 61, maximum = 65, dust = "Illusion Dust", dustMinimum = 2, dustMaximum = 5, armorDust = 0.75, essence = "Greater Eternal Essence", essenceMinimum = 2, essenceMaximum = 3, armorEssence = 0.20, shard = "Large Brilliant Shard", shardChance = 0.05 },
-}
-
 local function isPositiveInteger(value)
     return type(value) == "number" and value > 0 and value == math.floor(value)
 end
@@ -117,148 +103,17 @@ local function getItemFromTooltip(tooltip)
     return itemId, itemLink
 end
 
-local function getClassicEstimate(itemLink)
-    if not C_Item or type(C_Item.GetItemInfo) ~= "function" then
-        return nil
-    end
-
-    local _, _, quality, itemLevel, _, _, _, _, _, _, _, classId = C_Item.GetItemInfo(itemLink)
-    if quality ~= 2 or (classId ~= 2 and classId ~= 4) or type(itemLevel) ~= "number" then
-        return nil
-    end
-
-    local tier
-    for _, candidate in ipairs(classicUncommonTiers) do
-        if itemLevel >= candidate.minimum and itemLevel <= candidate.maximum then
-            tier = candidate
-            break
-        end
-    end
-    if tier == nil then
-        return nil
-    end
-
-    local armor = classId == 4
-    local dustChance = armor and tier.armorDust or 1 - tier.armorDust - (tier.shardChance or 0)
-    local essenceChance = armor and tier.armorEssence or 1 - tier.armorEssence - (tier.shardChance or 0)
-    local entries = {
-        {
-            name = tier.dust,
-            probability = dustChance,
-            minQuantity = tier.dustMinimum,
-            maxQuantity = tier.dustMaximum,
-            sampleSize = 1,
-        },
-        {
-            name = tier.essence,
-            probability = essenceChance,
-            minQuantity = tier.essenceMinimum,
-            maxQuantity = tier.essenceMaximum,
-            sampleSize = 1,
-        },
-    }
-
-    if tier.shard then
-        table.insert(entries, {
-            name = tier.shard,
-            probability = tier.shardChance,
-            minQuantity = 1,
-            maxQuantity = 1,
-            sampleSize = 1,
-        })
-    end
-
-    return entries
-end
-
-local function getItemLevelGuess(itemLink)
-    if not C_Item or type(C_Item.GetItemInfo) ~= "function" then
-        return nil
-    end
-
-    local _, _, quality, itemLevel, _, _, _, _, _, _, _, classId = C_Item.GetItemInfo(itemLink)
-    if (quality ~= 2 and quality ~= 3 and quality ~= 4)
-        or (classId ~= 2 and classId ~= 4)
-        or type(itemLevel) ~= "number" then
-        return nil
-    end
-
-    local tier = classicUncommonTiers[#classicUncommonTiers]
-    for _, candidate in ipairs(classicUncommonTiers) do
-        if itemLevel <= candidate.maximum then
-            tier = candidate
-            break
-        end
-    end
-
-    if quality == 3 then
-        return {
-            {
-                name = tier.shard or "Small Glimmering Shard",
-                probability = 1,
-                minQuantity = 1,
-                maxQuantity = 1,
-                sampleSize = 1,
-            },
-        }
-    end
-
-    if quality == 4 then
-        return {
-            {
-                name = tier.shard or "Small Glimmering Shard",
-                probability = 1,
-                minQuantity = 2,
-                maxQuantity = 4,
-                sampleSize = 1,
-            },
-        }
-    end
-
-    local armor = classId == 4
-    local dustChance = armor and tier.armorDust or 1 - tier.armorDust - (tier.shardChance or 0)
-    local essenceChance = armor and tier.armorEssence or 1 - tier.armorEssence - (tier.shardChance or 0)
-    local entries = {
-        {
-            name = tier.dust,
-            probability = dustChance,
-            minQuantity = tier.dustMinimum,
-            maxQuantity = tier.dustMaximum,
-            sampleSize = 1,
-        },
-        {
-            name = tier.essence,
-            probability = essenceChance,
-            minQuantity = tier.essenceMinimum,
-            maxQuantity = tier.essenceMaximum,
-            sampleSize = 1,
-        },
-    }
-
-    if tier.shard then
-        table.insert(entries, {
-            name = tier.shard,
-            probability = tier.shardChance,
-            minQuantity = 1,
-            maxQuantity = 1,
-            sampleSize = 1,
-        })
-    end
-
-    return entries
-end
-
 local function addDisenchantData(tooltip, tooltipData)
     local data = DisenchantTooltipData
     if type(data) ~= "table" or type(data.items) ~= "table" then
         return
     end
 
-    local itemId, itemLink
+    local itemId
     if tooltipData ~= nil then
-        itemId, itemLink = getItemFromTooltipData(tooltipData)
+        itemId = getItemFromTooltipData(tooltipData)
     else
-        itemId, itemLink = getItemFromTooltip(tooltip)
+        itemId = getItemFromTooltip(tooltip)
     end
     if itemId == nil or tooltip.__disenchantTooltipItemId == itemId then
         return
@@ -266,17 +121,8 @@ local function addDisenchantData(tooltip, tooltipData)
 
     local sourceMode = data.source and data.source.mode
     local isMock = sourceMode == "mock"
-    local isClassicEstimate = sourceMode == "classic-estimate"
     local entries = isMock and data.mockEntries
         or data.items[itemId]
-    local isItemLevelGuess = false
-    if isClassicEstimate then
-        entries = getClassicEstimate(itemLink)
-        if entries == nil then
-            entries = getItemLevelGuess(itemLink)
-            isItemLevelGuess = entries ~= nil
-        end
-    end
     if type(entries) ~= "table" then
         return
     end
@@ -304,8 +150,6 @@ local function addDisenchantData(tooltip, tooltipData)
     local title = "Disenchanting"
     if isMock then
         title = "Disenchanting (mock data)"
-    elseif isClassicEstimate then
-        title = isItemLevelGuess and "Disenchanting (item-level guess)" or "Disenchanting (Classic estimate)"
     end
     tooltip:AddLine(title, 0.55, 0.82, 1)
 
@@ -321,8 +165,6 @@ local function addDisenchantData(tooltip, tooltipData)
 
     if not isMock and data.source and data.source.name == "ForeverDB.net" then
         tooltip:AddLine("Data from ForeverDB.net (https://foreverdb.net)", 0.5, 0.7, 0.9)
-    elseif isClassicEstimate then
-        tooltip:AddLine(isItemLevelGuess and "Rarity/level guess; may differ on Forever." or "Classic rules; may differ on Forever.", 1, 0.82, 0)
     end
 
     -- TooltipDataProcessor shows the tooltip itself after post-calls.

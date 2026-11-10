@@ -8,7 +8,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 if ([string]::IsNullOrWhiteSpace($ProviderPath)) {
-    $ProviderPath = Join-Path $PSScriptRoot 'Providers\ClassicEstimateProvider.ps1'
+    $ProviderPath = Join-Path $PSScriptRoot 'Providers\ForeverDBProvider.ps1'
 }
 if ([string]::IsNullOrWhiteSpace($OutputPath)) {
     $OutputPath = Join-Path $PSScriptRoot 'Data\DisenchantData.lua'
