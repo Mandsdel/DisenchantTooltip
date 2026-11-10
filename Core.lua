@@ -55,13 +55,66 @@ local function formatQuantity(entry)
     return string.format(" (%d-%d)", entry.minQuantity, entry.maxQuantity)
 end
 
-local function getItemId(tooltip)
-    local _, itemLink = tooltip:GetItem()
-    if type(itemLink) ~= "string" then
+local function isSecret(value)
+    return type(issecretvalue) == "function" and issecretvalue(value) and true or false
+end
+
+local function getItemIdFromLink(itemLink)
+    if type(itemLink) ~= "string" or isSecret(itemLink) then
         return nil
     end
 
-    return tonumber(itemLink:match("item:(%d+)")), itemLink
+    return tonumber(itemLink:match("item:(%d+)"))
+end
+
+-- Comparison tooltips (ShoppingTooltip1/2) on Forever do not have GetItem, so prefer the
+-- tooltip data supplied by TooltipDataProcessor.
+local function getItemFromTooltipData(tooltipData)
+    if type(tooltipData) ~= "table" then
+        return nil
+    end
+
+    local itemLink = tooltipData.hyperlink
+    if isSecret(itemLink) or type(itemLink) ~= "string" then
+        itemLink = nil
+    end
+
+    local guid = tooltipData.guid
+    if itemLink == nil
+        and guid ~= nil
+        and not isSecret(guid)
+        and C_Item
+        and type(C_Item.GetItemLinkByGUID) == "function" then
+        itemLink = C_Item.GetItemLinkByGUID(guid)
+        if isSecret(itemLink) or type(itemLink) ~= "string" then
+            itemLink = nil
+        end
+    end
+
+    local itemId = tooltipData.id
+    if isSecret(itemId) or not isPositiveInteger(itemId) then
+        itemId = getItemIdFromLink(itemLink)
+    end
+
+    if itemId == nil then
+        return nil
+    end
+
+    return itemId, itemLink or itemId
+end
+
+local function getItemFromTooltip(tooltip)
+    if type(tooltip.GetItem) ~= "function" then
+        return nil
+    end
+
+    local _, itemLink = tooltip:GetItem()
+    local itemId = getItemIdFromLink(itemLink)
+    if itemId == nil then
+        return nil
+    end
+
+    return itemId, itemLink
 end
 
 local function getClassicEstimate(itemLink)
@@ -195,13 +248,18 @@ local function getItemLevelGuess(itemLink)
     return entries
 end
 
-local function addDisenchantData(tooltip)
+local function addDisenchantData(tooltip, tooltipData)
     local data = DisenchantTooltipData
     if type(data) ~= "table" or type(data.items) ~= "table" then
         return
     end
 
-    local itemId, itemLink = getItemId(tooltip)
+    local itemId, itemLink
+    if tooltipData ~= nil then
+        itemId, itemLink = getItemFromTooltipData(tooltipData)
+    else
+        itemId, itemLink = getItemFromTooltip(tooltip)
+    end
     if itemId == nil or tooltip.__disenchantTooltipItemId == itemId then
         return
     end
@@ -267,7 +325,10 @@ local function addDisenchantData(tooltip)
         tooltip:AddLine(isItemLevelGuess and "Rarity/level guess; may differ on Forever." or "Classic rules; may differ on Forever.", 1, 0.82, 0)
     end
 
-    tooltip:Show()
+    -- TooltipDataProcessor shows the tooltip itself after post-calls.
+    if tooltipData == nil then
+        tooltip:Show()
+    end
 end
 
 local function clearTooltipState(tooltip)
@@ -296,9 +357,9 @@ local usesNativeTooltipCallbacks = type(GameTooltip.GetPrimaryTooltipData) == "f
     and Enum.TooltipDataType.Item
 
 if usesNativeTooltipCallbacks then
-    TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip)
+    TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, tooltipData)
         clearTooltipState(tooltip)
-        addDisenchantData(tooltip)
+        addDisenchantData(tooltip, tooltipData or {})
     end)
 else
     hookTooltip(GameTooltip)
