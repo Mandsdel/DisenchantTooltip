@@ -70,7 +70,7 @@ local function getClassicEstimate(itemLink)
     end
 
     local _, _, quality, itemLevel, _, _, _, _, _, _, _, classId = C_Item.GetItemInfo(itemLink)
-    if quality ~= 2 or (classId ~= 2 and classId ~= 4) then
+    if quality ~= 2 or (classId ~= 2 and classId ~= 4) or type(itemLevel) ~= "number" then
         return nil
     end
 
@@ -83,6 +83,83 @@ local function getClassicEstimate(itemLink)
     end
     if tier == nil then
         return nil
+    end
+
+    local armor = classId == 4
+    local dustChance = armor and tier.armorDust or 1 - tier.armorDust - (tier.shardChance or 0)
+    local essenceChance = armor and tier.armorEssence or 1 - tier.armorEssence - (tier.shardChance or 0)
+    local entries = {
+        {
+            name = tier.dust,
+            probability = dustChance,
+            minQuantity = tier.dustMinimum,
+            maxQuantity = tier.dustMaximum,
+            sampleSize = 1,
+        },
+        {
+            name = tier.essence,
+            probability = essenceChance,
+            minQuantity = tier.essenceMinimum,
+            maxQuantity = tier.essenceMaximum,
+            sampleSize = 1,
+        },
+    }
+
+    if tier.shard then
+        table.insert(entries, {
+            name = tier.shard,
+            probability = tier.shardChance,
+            minQuantity = 1,
+            maxQuantity = 1,
+            sampleSize = 1,
+        })
+    end
+
+    return entries
+end
+
+local function getItemLevelGuess(itemLink)
+    if not C_Item or type(C_Item.GetItemInfo) ~= "function" then
+        return nil
+    end
+
+    local _, _, quality, itemLevel, _, _, _, _, _, _, _, classId = C_Item.GetItemInfo(itemLink)
+    if (quality ~= 2 and quality ~= 3 and quality ~= 4)
+        or (classId ~= 2 and classId ~= 4)
+        or type(itemLevel) ~= "number" then
+        return nil
+    end
+
+    local tier = classicUncommonTiers[#classicUncommonTiers]
+    for _, candidate in ipairs(classicUncommonTiers) do
+        if itemLevel <= candidate.maximum then
+            tier = candidate
+            break
+        end
+    end
+
+    if quality == 3 then
+        return {
+            {
+                name = tier.shard or "Small Glimmering Shard",
+                probability = 1,
+                minQuantity = 1,
+                maxQuantity = 1,
+                sampleSize = 1,
+            },
+        }
+    end
+
+    if quality == 4 then
+        return {
+            {
+                name = tier.shard or "Small Glimmering Shard",
+                probability = 1,
+                minQuantity = 2,
+                maxQuantity = 4,
+                sampleSize = 1,
+            },
+        }
     end
 
     local armor = classId == 4
@@ -133,8 +210,15 @@ local function addDisenchantData(tooltip)
     local isMock = sourceMode == "mock"
     local isClassicEstimate = sourceMode == "classic-estimate"
     local entries = isMock and data.mockEntries
-        or isClassicEstimate and getClassicEstimate(itemLink)
         or data.items[itemId]
+    local isItemLevelGuess = false
+    if isClassicEstimate then
+        entries = getClassicEstimate(itemLink)
+        if entries == nil then
+            entries = getItemLevelGuess(itemLink)
+            isItemLevelGuess = entries ~= nil
+        end
+    end
     if type(entries) ~= "table" then
         return
     end
@@ -163,7 +247,7 @@ local function addDisenchantData(tooltip)
     if isMock then
         title = "Disenchanting (mock data)"
     elseif isClassicEstimate then
-        title = "Disenchanting (Classic estimate)"
+        title = isItemLevelGuess and "Disenchanting (item-level guess)" or "Disenchanting (Classic estimate)"
     end
     tooltip:AddLine(title, 0.55, 0.82, 1)
 
@@ -180,7 +264,7 @@ local function addDisenchantData(tooltip)
     if not isMock and data.source and data.source.name == "ForeverDB.net" then
         tooltip:AddLine("Data from ForeverDB.net (https://foreverdb.net)", 0.5, 0.7, 0.9)
     elseif isClassicEstimate then
-        tooltip:AddLine("Classic rules; may differ on Forever.", 1, 0.82, 0)
+        tooltip:AddLine(isItemLevelGuess and "Rarity/level guess; may differ on Forever." or "Classic rules; may differ on Forever.", 1, 0.82, 0)
     end
 
     tooltip:Show()

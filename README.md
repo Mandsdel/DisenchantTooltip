@@ -4,7 +4,7 @@ A World of Warcraft: Forever addon that will display verified disenchant outcome
 
 ## Status
 
-The updater now defaults to a temporary Classic estimate provider while ForeverDB access is pending. It derives outcomes locally only for original-Classic uncommon armor and weapons at item levels 1–65, labels every section `Classic estimate`, and suppresses fish, consumables, rares, epics, and unsupported/custom items. These are not verified Forever results.
+The updater now defaults to a temporary Classic estimate provider while ForeverDB access is pending. It derives outcomes locally from item quality, class, and level. Original-Classic uncommon armor and weapons at item levels 1–65 are labeled `Classic estimate`; other uncommon ranges and rare/epic equipment are visibly labeled `item-level guess`. Fish, consumables, and other non-equipment remain suppressed. None of these are verified Forever results.
 
 ## Installation
 
