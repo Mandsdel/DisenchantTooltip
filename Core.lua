@@ -1,4 +1,8 @@
-local addonName = ...
+local existingSource = type(DisenchantTooltipData) == "table" and DisenchantTooltipData.source
+if type(existingSource) == "table"
+    and (existingSource.mode == "classic-estimate" or existingSource.mode == "mock") then
+    print("|cff00bfffDisenchantTooltip:|r Old data detected. Run Update Disenchant Data.cmd to load ForeverDB data.")
+end
 
 local function isPositiveInteger(value)
     return type(value) == "number" and value > 0 and value == math.floor(value)
@@ -60,9 +64,18 @@ local function getItemFromTooltipData(tooltipData)
         return nil
     end
 
+    local itemId = tooltipData.id
+    if not isSecret(itemId) and isPositiveInteger(itemId) then
+        return itemId
+    end
+
     local itemLink = tooltipData.hyperlink
     if isSecret(itemLink) or type(itemLink) ~= "string" then
         itemLink = nil
+    end
+    itemId = getItemIdFromLink(itemLink)
+    if itemId ~= nil then
+        return itemId
     end
 
     local guid = tooltipData.guid
@@ -77,16 +90,7 @@ local function getItemFromTooltipData(tooltipData)
         end
     end
 
-    local itemId = tooltipData.id
-    if isSecret(itemId) or not isPositiveInteger(itemId) then
-        itemId = getItemIdFromLink(itemLink)
-    end
-
-    if itemId == nil then
-        return nil
-    end
-
-    return itemId, itemLink or itemId
+    return getItemIdFromLink(itemLink)
 end
 
 local function getItemFromTooltip(tooltip)
@@ -100,7 +104,7 @@ local function getItemFromTooltip(tooltip)
         return nil
     end
 
-    return itemId, itemLink
+    return itemId
 end
 
 local function addDisenchantData(tooltip, tooltipData)
@@ -119,10 +123,7 @@ local function addDisenchantData(tooltip, tooltipData)
         return
     end
 
-    local sourceMode = data.source and data.source.mode
-    local isMock = sourceMode == "mock"
-    local entries = isMock and data.mockEntries
-        or data.items[itemId]
+    local entries = data.items[itemId]
     if type(entries) ~= "table" then
         return
     end
@@ -147,11 +148,7 @@ local function addDisenchantData(tooltip, tooltipData)
     end)
 
     tooltip.__disenchantTooltipItemId = itemId
-    local title = "Disenchanting"
-    if isMock then
-        title = "Disenchanting (mock data)"
-    end
-    tooltip:AddLine(title, 0.55, 0.82, 1)
+    tooltip:AddLine("Disenchanting", 0.55, 0.82, 1)
 
     for index = 1, math.min(3, #validEntries) do
         local entry = validEntries[index]
@@ -163,7 +160,7 @@ local function addDisenchantData(tooltip, tooltipData)
         ), 1, 1, 1)
     end
 
-    if not isMock and data.source and data.source.name == "ForeverDB.net" then
+    if data.source and data.source.name == "ForeverDB.net" then
         tooltip:AddLine("Data from ForeverDB.net (https://foreverdb.net)", 0.5, 0.7, 0.9)
     end
 

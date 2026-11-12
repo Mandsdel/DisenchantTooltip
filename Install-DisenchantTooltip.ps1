@@ -39,6 +39,7 @@ try {
 
     Write-Host "Installed successfully to $destination"
     Write-Host 'Existing generated data and local configuration were preserved.'
+    Write-Host 'If upgrading from Classic estimates or mock data, run Update Disenchant Data.cmd in the installed addon directory.'
 }
 catch {
     Write-Error "Installation failed. $($_.Exception.Message)"
