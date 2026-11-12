@@ -7,10 +7,10 @@ function Get-DisenchantProviderData {
     return [pscustomobject]@{
         schemaVersion = 1
         source = [pscustomobject]@{
-            name = 'Mock provider'
-            mode = 'mock'
+            name = 'Test provider'
+            mode = 'test'
             url = ''
-            version = 'mock-1'
+            version = 'fixture-1'
             generatedAt = '2026-11-10T00:00:00Z'
         }
         minimumSampleSize = 25

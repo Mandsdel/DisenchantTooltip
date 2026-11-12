@@ -11,7 +11,7 @@ if ([string]::IsNullOrWhiteSpace($ProjectRoot)) {
 }
 
 $updater = Join-Path $ProjectRoot 'Update-DisenchantData.ps1'
-$mockProvider = Join-Path $ProjectRoot 'Providers\MockProvider.ps1'
+$testProvider = Join-Path $ProjectRoot 'tests\FixtureProvider.ps1'
 $testDirectory = Join-Path ([IO.Path]::GetTempPath()) ('DisenchantTooltip-test-' + [guid]::NewGuid().ToString())
 $dataPath = Join-Path $testDirectory 'DisenchantData.lua'
 $invalidProvider = Join-Path $testDirectory 'InvalidProvider.ps1'
@@ -19,30 +19,33 @@ $invalidProvider = Join-Path $testDirectory 'InvalidProvider.ps1'
 try {
     New-Item -ItemType Directory -Path $testDirectory | Out-Null
 
-    & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $updater -ProviderPath $mockProvider -OutputPath $dataPath
+    & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $updater -ProviderPath $testProvider -OutputPath $dataPath
     if ($LASTEXITCODE -ne 0) {
-        throw 'Mock provider update failed.'
+        throw 'Test provider update failed.'
     }
 
     $firstHash = (Get-FileHash -LiteralPath $dataPath -Algorithm SHA256).Hash
-    & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $updater -ProviderPath $mockProvider -OutputPath $dataPath
+    & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $updater -ProviderPath $testProvider -OutputPath $dataPath
     if ($LASTEXITCODE -ne 0) {
-        throw 'Second mock provider update failed.'
+        throw 'Second test provider update failed.'
     }
 
     $secondHash = (Get-FileHash -LiteralPath $dataPath -Algorithm SHA256).Hash
     if ($firstHash -ne $secondHash) {
-        throw 'Mock provider output is not deterministic.'
+        throw 'Test provider output is not deterministic.'
     }
-    if (-not (Select-String -LiteralPath $dataPath -Pattern 'mockEntries = {' -Quiet)) {
-        throw 'Mock provider output does not contain global mock entries.'
+    if (-not (Select-String -LiteralPath $dataPath -SimpleMatch '[999001] = {' -Quiet)) {
+        throw 'Test provider output does not contain item-specific entries.'
+    }
+    if (Select-String -LiteralPath $dataPath -SimpleMatch 'mockEntries = {' -Quiet) {
+        throw 'Test provider output contains obsolete global mock entries.'
     }
 
     @'
 function Get-DisenchantProviderData {
     [pscustomobject]@{
         schemaVersion = 1
-        source = [pscustomobject]@{ name = 'Invalid test'; mode = 'mock'; url = ''; version = '1'; generatedAt = '2026-11-10T00:00:00Z' }
+        source = [pscustomobject]@{ name = 'Invalid test'; mode = 'test'; url = ''; version = '1'; generatedAt = '2026-11-10T00:00:00Z' }
         minimumSampleSize = 25
         records = @([pscustomobject]@{ itemId = 999001; outputName = 'Invalid'; probability = 0.5; minimumQuantity = 1; maximumQuantity = 1; sampleSize = 1 })
     }

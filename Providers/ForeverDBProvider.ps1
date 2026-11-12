@@ -85,7 +85,7 @@ function Get-DisenchantProviderData {
         throw 'ForeverDB returned no disenchant rules.'
     }
 
-    $items = @()
+    $items = [System.Collections.Generic.List[object]]::new()
     foreach ($classId in 2, 4) {
         foreach ($qualityId in 2, 3, 4) {
             $itemType = if ($classId -eq 2) { 'weapons' } else { 'armor' }
@@ -96,7 +96,9 @@ function Get-DisenchantProviderData {
                     -ApiToken $apiToken `
                     -RequestDelayMilliseconds $RequestDelayMilliseconds
                 $page = @($response.data)
-                $items += $page
+                foreach ($item in $page) {
+                    $items.Add($item)
+                }
                 $offset += $page.Count
                 $total = [int](Get-PropertyValue $response.meta 'total')
                 Write-Host "Fetched $itemType (quality $qualityId): $offset of $total items."
