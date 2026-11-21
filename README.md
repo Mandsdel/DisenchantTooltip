@@ -6,6 +6,9 @@ A World of Warcraft: Forever addon that displays ForeverDB-sourced disenchant ou
 
 The updater imports ForeverDB's disenchant data and maps its item-level rules to the current Forever item catalog. It uses Forever observations when available, otherwise ForeverDB's Classic rules. Tooltip data is generated locally; the addon never makes in-game network requests.
 
+**Options > AddOns > Disenchant Tooltip** shows usage information. There are no
+configurable settings.
+
 ## Disenchant with Enchantress' Spire
 
 Create a macro and place it on an action bar:
