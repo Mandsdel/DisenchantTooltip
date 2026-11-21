@@ -16,7 +16,7 @@ try {
         New-Item -ItemType Directory -Path $destination | Out-Null
     }
 
-    foreach ($file in 'DisenchantTooltip.toc', 'Core.lua', 'Update-DisenchantData.ps1', 'Update Disenchant Data.cmd', 'README.md') {
+    foreach ($file in 'DisenchantTooltip.toc', 'Core.lua', 'Spire.lua', 'Update-DisenchantData.ps1', 'Update Disenchant Data.cmd', 'README.md') {
         Copy-Item -LiteralPath (Join-Path $PSScriptRoot $file) -Destination (Join-Path $destination $file) -Force
     }
 
