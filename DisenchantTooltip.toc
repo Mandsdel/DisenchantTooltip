@@ -2,6 +2,8 @@
 ## Title: Disenchant Tooltip
 ## Notes: Displays locally generated disenchant outcome data in item tooltips.
 ## Version: 0.1.0
+## SavedVariablesPerCharacter: DisenchantTooltipSpireRestore
 
 Data\DisenchantData.lua
 Core.lua
+Spire.lua
